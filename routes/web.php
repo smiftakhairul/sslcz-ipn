@@ -16,3 +16,20 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+
+Route::get('/email', 'EmailController@show')->name('email.show');
+Route::get('/sms', 'SMSController@show')->name('sms.show');
+
+Route::post('/email/send', 'EmailController@send')->name('email.send');
