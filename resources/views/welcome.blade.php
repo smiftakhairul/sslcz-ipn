@@ -76,8 +76,8 @@
                             <a href="{{ route('register') }}">Register</a>
                         @endif
                     @endauth
-                        <a href="{{ route('email') }}">Email</a>
-                        <a href="{{ route('sms') }}">SMS</a>
+                        <a href="{{ route('email.show') }}">Email</a>
+                        <a href="{{ route('sms.show') }}">SMS</a>
                 </div>
             @endif
 

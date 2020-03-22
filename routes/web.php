@@ -33,3 +33,4 @@ Route::get('/email', 'EmailController@show')->name('email.show');
 Route::get('/sms', 'SMSController@show')->name('sms.show');
 
 Route::post('/email/send', 'EmailController@send')->name('email.send');
+Route::post('/sms/send', 'SMSController@send')->name('sms.send');

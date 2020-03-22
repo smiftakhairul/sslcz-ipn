@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Email;
 use App\Events\GreetMailEvent;
 use App\Jobs\SendGreetMail;
 use http\Env\Response;
@@ -29,6 +30,7 @@ class GreetMailEventListener
     public function handle(GreetMailEvent $event)
     {
 //        var_dump($event->getData()); exit();
+//        dd($event->getData()['request_data']['id']);
         dispatch(new SendGreetMail($event->getData()));
     }
 }

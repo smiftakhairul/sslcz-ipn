@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\GreetMailEvent;
+use App\Events\GreetSmsEvent;
 use App\Listeners\GreetMailEventListener;
+use App\Listeners\GreetSmsEventListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         GreetMailEvent::class => [
             GreetMailEventListener::class,
+        ],
+        GreetSmsEvent::class => [
+            GreetSmsEventListener::class,
         ],
     ];
 

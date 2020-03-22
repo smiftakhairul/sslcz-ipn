@@ -8,14 +8,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Util\Exception;
+use App\Email;
 
 class SendGreetMail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $data;
+
+    public $tries = 5;
 
     /**
      * Create a new job instance.
@@ -39,18 +43,10 @@ class SendGreetMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            if ($this->getData()['request_data']['recipient'] == 'all') {
-                foreach ($this->getData()['recipient'] as $recipient) {
-                    Mail::to($recipient['email'])
-                        ->send(new Greet($this->getData()['request_data']));
-                }
-            } else {
-                Mail::to($this->getData()['recipient'])
-                    ->send(new Greet($this->getData()['request_data']));
-            }
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if (Mail::to($this->getData()['recipient'])->send(new Greet($this->getData()['request_data']))) {
+            Email::find($this->getData()['request_data']['id'])->update(['status' => 'success']);
+        } else {
+            Email::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
         }
     }
 }

@@ -26,22 +26,54 @@ class EmailController extends Controller
     {
         $request->validate([
             'sender' => 'required|max:255',
-            'recipient' => 'required|max:255',
+            'recipient' => 'required',
             'subject' => 'required|min:10|max:255',
             'content' => 'required|min:200',
         ]);
 
-//        Patch all data to DB
-        Email::create($request->all());
+//        dd($request->all());
 
-//        Recipient selection
-        if ($request->recipient == 'all') {
-            $recipient = User::where('email', '!=', $request->sender)->get();
-        } else {
-            $recipient = $request->recipient;
+        foreach ($request->recipient as $index => $recipient) {
+            $email = [
+                '_token' => $request->_token,
+                'sender' => $request->sender,
+                'recipient' => $recipient,
+                'subject' => $request->subject,
+                'content' => $request->content
+            ];
+            $saved_email = Email::create($email);
+            event(new GreetMailEvent(['recipient' => $recipient, 'request_data' => $saved_email]));
         }
 
-        event(new GreetMailEvent(['recipient' => $recipient, 'request_data' => $request->all()]));
+        if (isset($request->cc) && !empty($request->cc)) {
+            foreach ($request->cc as $index => $cc) {
+                $email = [
+                    '_token' => $request->_token,
+                    'sender' => $request->sender,
+                    'recipient' => $cc,
+                    'subject' => $request->subject,
+                    'content' => $request->content,
+                    'type' => 'cc'
+                ];
+                $saved_email = Email::create($email);
+                event(new GreetMailEvent(['recipient' => $cc, 'request_data' => $saved_email]));
+            }
+        }
+
+        if (isset($request->bcc) && !empty($request->bcc)) {
+            foreach ($request->bcc as $index => $bcc) {
+                $email = [
+                    '_token' => $request->_token,
+                    'sender' => $request->sender,
+                    'recipient' => $bcc,
+                    'subject' => $request->subject,
+                    'content' => $request->content,
+                    'type' => 'cc'
+                ];
+                $saved_email = Email::create($email);
+                event(new GreetMailEvent(['recipient' => $bcc, 'request_data' => $saved_email]));
+            }
+        }
 
         return redirect()->route('email.show')->with('success', 'Success! Mail has been sent.');
     }

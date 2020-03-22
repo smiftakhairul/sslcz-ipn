@@ -2,8 +2,8 @@
 
 @section('content')
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
+        <div class="row">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header"><h3>Send Email</h3></div>
                     <div class="card-body">
@@ -16,6 +16,8 @@
                         <form method="POST" action="{{ route('email.send') }}">
                             @csrf
 
+                            <div class="row">
+                            <div class="col-md-6">
                             <div class="form-group row">
                                 <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('Email From') }}</label>
 
@@ -34,8 +36,8 @@
                                 <label for="emails" class="col-md-4 col-form-label text-md-right">{{ __('Email To') }}</label>
 
                                 <div class="col-md-6">
-                                    <select name="recipient" id="emails" class="form-control" required>
-                                        <option value="all">All</option>
+                                    <select name="recipient[]" multiple id="emails" class="form-control multi-select" required>
+{{--                                        <option value="all">All</option>--}}
                                         @foreach($users as $user)
                                             <option value="{{ $user->email }}">{{ $user->name }}</option>
                                         @endforeach
@@ -61,7 +63,7 @@
                                 <label for="content" class="col-md-4 col-form-label text-md-right">{{ __('Email Body') }}</label>
 
                                 <div class="col-md-6">
-                                    <textarea name="content" id="content" cols="30" rows="10" class="form-control @error('subject') is-invalid @enderror">{{ old('content') }}</textarea>
+                                    <textarea name="content" id="content" cols="30" rows="10" class="form-control @error('content') is-invalid @enderror">{{ old('content') }}</textarea>
 
                                     @error('content')
                                     <span class="invalid-feedback" role="alert">
@@ -70,9 +72,38 @@
                                     @enderror
                                 </div>
                             </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <label for="emails_cc" class="col-md-4 col-form-label text-md-right">{{ __('Email CC') }}</label>
+
+                                    <div class="col-md-6">
+                                        <select name="cc[]" multiple id="emails_cc" class="form-control multi-select">
+                                            <option value="">Select CC</option>
+                                            @foreach($users as $user)
+                                                <option value="{{ $user->email }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="emails_bcc" class="col-md-4 col-form-label text-md-right">{{ __('Email To') }}</label>
+
+                                    <div class="col-md-6">
+                                        <select name="bcc[]" multiple id="emails_bcc" class="form-control multi-select">
+                                            <option value="">Select BCC</option>
+                                            @foreach($users as $user)
+                                                <option value="{{ $user->email }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            </div>
 
                             <div class="form-group row mb-0">
-                                <div class="col-md-8 offset-md-4">
+                                <div class="col-md-12 text-left">
                                     <button type="submit" class="btn btn-primary">
                                         {{ __('Send Email') }}
                                     </button>
