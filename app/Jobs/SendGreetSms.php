@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Nexmo\Laravel\Facade\Nexmo;
+use PHPUnit\Util\Exception;
 
 class SendGreetSms implements ShouldQueue
 {
@@ -40,15 +41,21 @@ class SendGreetSms implements ShouldQueue
      */
     public function handle()
     {
-        $response = Nexmo::message()->send([
-            'to'   => $this->getData()['request_data']['recipient'],
-            'from' => $this->getData()['request_data']['sender'],
-            'text' => $this->getData()['request_data']['content']
-        ]);
+        try {
+            $message = Nexmo::message()->send([
+                'to' => $this->getData()['request_data']['recipient'],
+                'from' => $this->getData()['request_data']['sender'],
+                'text' => $this->getData()['request_data']['content']
+            ]);
 
-        if ($response) {
-            Sms::find($this->getData()['request_data']['id'])->update(['status' => 'success']);
-        } else {
+            $response = $message->getResponseData();
+
+            if ($response['messages'][0]['status'] == 0) {
+                Sms::find($this->getData()['request_data']['id'])->update(['status' => 'success']);
+            } else {
+                Sms::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
+            }
+        } catch (\Exception $e) {
             Sms::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
         }
     }

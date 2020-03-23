@@ -9,6 +9,7 @@ use Bitfumes\KarixNotificationChannel\KarixChannel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Nexmo\Laravel\Facade\Nexmo;
+use PHPUnit\Exception;
 
 class SMSController extends Controller
 {
@@ -32,7 +33,7 @@ class SMSController extends Controller
     {
         $request->validate([
             'recipient' => 'required',
-            'content' => 'required|min:200',
+            'content' => 'required|min:5',
         ]);
 
         foreach ($request->recipient as $recipient) {
@@ -45,5 +46,7 @@ class SMSController extends Controller
             $saved_sms = Sms::create($sms);
             event(new GreetSmsEvent(['request_data' => $saved_sms]));
         }
+
+        return redirect()->route('sms.show')->with('success', 'Success! SMS has been sent.');
     }
 }
