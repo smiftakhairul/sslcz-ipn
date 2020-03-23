@@ -18,4 +18,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('api')->post('/email/send', 'API\EmailController@send')->name('api.email.send');
+//Route::middleware('api')->post('/email/send', 'API\EmailController@send')->name('api.email.send');
+
+Route::prefix('v1')->middleware('api')->group(function () {
+    Route::post('/email/send', 'API\v1\EmailController@send')->name('api.v1.email.send');
+});

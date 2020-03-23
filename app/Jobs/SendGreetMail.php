@@ -43,10 +43,11 @@ class SendGreetMail implements ShouldQueue
      */
     public function handle()
     {
-        if (Mail::to($this->getData()['recipient'])->send(new Greet($this->getData()['request_data']))) {
-            Email::find($this->getData()['request_data']['id'])->update(['status' => 'success']);
-        } else {
+        Mail::to($this->getData()['recipient'])->send(new Greet($this->getData()['request_data']));
+        if (count(Mail::failures()) > 0 && in_array($this->getData()['recipient'], Mail::failures())) {
             Email::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
+        } else {
+            Email::find($this->getData()['request_data']['id'])->update(['status' => 'success']);
         }
     }
 }
