@@ -30,7 +30,7 @@ Auth::routes();
 Route::get('/home', 'HomeController@index')->name('home');
 
 Route::get('/email', 'EmailController@show')->name('email.show');
-Route::get('/sms', 'SMSController@show')->name('sms.show');
+Route::get('/sms', 'SmsController@show')->name('sms.show');
 
 Route::post('/email/send', 'EmailController@send')->name('email.send');
 Route::post('/sms/send', 'SMSController@send')->name('sms.send');

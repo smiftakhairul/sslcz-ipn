@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\EmailLog;
 use App\Events\GreetSmsEvent;
 use App\Notifications\SendGreetSMS;
 use App\Sms;
+use App\SmsLog;
 use Bitfumes\KarixNotificationChannel\KarixChannel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Nexmo\Laravel\Facade\Nexmo;
 use PHPUnit\Exception;
 
-class SMSController extends Controller
+class SmsController extends Controller
 {
     protected $sender = '+8801630132436';
 
@@ -44,6 +46,15 @@ class SMSController extends Controller
                 'content' => $request->content,
             ];
             $saved_sms = Sms::create($sms);
+
+    //        write log
+            if ($saved_sms) {
+                $sms_log = SmsLog::create([
+                    'sms_id' => $saved_sms->id,
+                    'request' => json_encode($sms)
+                ]);
+            }
+
             event(new GreetSmsEvent(['request_data' => $saved_sms]));
         }
 

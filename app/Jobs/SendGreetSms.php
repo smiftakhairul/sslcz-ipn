@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Sms;
+use App\SmsLog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -55,6 +56,7 @@ class SendGreetSms implements ShouldQueue
             } else {
                 Sms::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
             }
+            SmsLog::firstWhere('sms_id', $this->getData()['request_data']['id'])->update(['response' => json_encode($response)]);
         } catch (\Exception $e) {
             Sms::find($this->getData()['request_data']['id'])->update(['status' => 'failed']);
         }

@@ -56,7 +56,7 @@ class SendGreetMail implements ShouldQueue
             Email::find($this->getData()['email']['id'])->update(['status' => 'failed']);
         } else {
             Email::find($this->getData()['email']['id'])->update(['status' => 'success']);
-            EmailLog::firstWhere('email_id', $this->getData()['email']['id'])->update(['response' => json_encode($response)]);
         }
+        EmailLog::firstWhere('email_id', $this->getData()['email']['id'])->update(['response' => json_encode($response)]);
     }
 }
