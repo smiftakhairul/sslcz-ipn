@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class Greet extends Mailable
 {
@@ -31,8 +32,21 @@ class Greet extends Mailable
      */
     public function build()
     {
-        return $this->from($this->data['sender'])->view('mail.greet')->with([
+        $email = $this->from($this->data['sender'])->view('mail.greet');
+
+        if (!empty($this->data['email_attachments'])) {
+            foreach ($this->data['email_attachments'] as $email_attachment) {
+                $email->attach(storage_path('app/public/' . $email_attachment['path']), [
+                    'as' => $email_attachment['filename'],
+                    'mime' => $email_attachment['mime'],
+                ]);
+            }
+        }
+
+        $email->with([
             'data' => $this->data
         ]);
+
+        return $email;
     }
 }

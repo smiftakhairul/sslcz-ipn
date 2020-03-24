@@ -13,7 +13,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('email.send') }}">
+                        <form method="POST" action="{{ route('email.send') }}" enctype="multipart/form-data">
                             @csrf
 
                             <div class="row">
@@ -87,7 +87,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label for="emails_bcc" class="col-md-4 col-form-label text-md-right">{{ __('Email To') }}</label>
+                                    <label for="emails_bcc" class="col-md-4 col-form-label text-md-right">{{ __('Email BCC') }}</label>
 
                                     <div class="col-md-6">
                                         <select name="bcc[]" multiple id="emails_bcc" class="form-control multi-select">
@@ -96,6 +96,20 @@
                                                 <option value="{{ $user->email }}">{{ $user->name }}</option>
                                             @endforeach
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="emails_attachments" class="col-md-4 col-form-label text-md-right">{{ __('Email Attachments') }}</label>
+
+                                    <div class="col-md-6">
+                                        <input type="file" name="attachments[]" multiple id="emails_attachments"
+                                               class="form-control @error('attachments') is-invalid @enderror">
+                                        @error('attachments')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>

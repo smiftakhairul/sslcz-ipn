@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\EmailAttachment;
+use App\EmailLog;
 use App\Events\GreetMailEvent;
 use App\Mail\Greet;
 use Illuminate\Http\Request;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use App\Email;
+use Illuminate\Support\Facades\Storage;
 
 class EmailController extends Controller
 {
@@ -29,51 +32,61 @@ class EmailController extends Controller
             'recipient' => 'required',
             'subject' => 'required|min:10|max:255',
             'content' => 'required|min:200',
+//            'attachments.*' => 'file|mimes:pdf|size:6144'
         ]);
 
 //        dd($request->all());
+        $request_data = $request->all();
 
-        foreach ($request->recipient as $index => $recipient) {
-            $email = [
-                '_token' => $request->_token,
-                'sender' => $request->sender,
-                'recipient' => $recipient,
-                'subject' => $request->subject,
-                'content' => $request->content
-            ];
-            $saved_email = Email::create($email);
-            event(new GreetMailEvent(['recipient' => $recipient, 'request_data' => $saved_email]));
-        }
-
+        $request->merge(['recipient' => json_encode($request->recipient)]);
         if (isset($request->cc) && !empty($request->cc)) {
-            foreach ($request->cc as $index => $cc) {
-                $email = [
-                    '_token' => $request->_token,
-                    'sender' => $request->sender,
-                    'recipient' => $cc,
-                    'subject' => $request->subject,
-                    'content' => $request->content,
-                    'type' => 'cc'
-                ];
-                $saved_email = Email::create($email);
-                event(new GreetMailEvent(['recipient' => $cc, 'request_data' => $saved_email]));
+            $request->merge(['cc' => json_encode($request->cc)]);
+        }
+        if (isset($request->bcc) && !empty($request->bcc)) {
+            $request->merge(['bcc' => json_encode($request->bcc)]);
+        }
+
+        $email = Email::create($request->except('attachments'));
+        $email_attachments = [];
+
+        if ($email && isset($request->attachments) && !empty($request->attachments)) {
+            foreach ($request->attachments as $attachment) {
+                $filename = $attachment->getClientOriginalName();
+                $mime = $attachment->getClientMimeType();
+
+                if (Storage::disk('public')->exists('attachments/emails/' . $email->id . '/'
+                    . $attachment->getClientOriginalName())) {
+                    $filename = time() . '_' . $attachment->getClientOriginalName();
+                }
+
+                $path = Storage::disk('public')->putFileAs('attachments/emails/' . $email->id, $attachment, $filename);
+                $email_attachment = EmailAttachment::create([
+                    'email_id' => $email->id,
+                    'path' => $path
+                ]);
+
+                if ($email_attachment) {
+                    array_push($email_attachments, [
+                        'path' => $path,
+                        'filename' => $filename,
+                        'mime' => $mime
+                    ]);
+                }
             }
         }
 
-        if (isset($request->bcc) && !empty($request->bcc)) {
-            foreach ($request->bcc as $index => $bcc) {
-                $email = [
-                    '_token' => $request->_token,
-                    'sender' => $request->sender,
-                    'recipient' => $bcc,
-                    'subject' => $request->subject,
-                    'content' => $request->content,
-                    'type' => 'cc'
-                ];
-                $saved_email = Email::create($email);
-                event(new GreetMailEvent(['recipient' => $bcc, 'request_data' => $saved_email]));
-            }
+        $request_data['email_attachments'] = $email_attachments;
+        unset($request_data['attachments']);
+
+//        write log
+        if ($email) {
+            $email_log = EmailLog::create([
+                'email_id' => $email->id,
+                'request' => json_encode($request_data)
+            ]);
         }
+
+        event(new GreetMailEvent(['request_data' => $request_data, 'email' => $email]));
 
         return redirect()->route('email.show')->with('success', 'Success! Mail has been sent.');
     }

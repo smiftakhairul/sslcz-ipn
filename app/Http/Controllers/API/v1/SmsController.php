@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class SmsController extends Controller
 {
     protected $sender = '+8801630132436';
-    
+
     public function send(Request $request)
     {
         $validator = Validator::make($request->all(), [

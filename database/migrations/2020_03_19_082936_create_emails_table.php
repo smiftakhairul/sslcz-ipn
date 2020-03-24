@@ -15,10 +15,16 @@ class CreateEmailsTable extends Migration
     {
         Schema::create('emails', function (Blueprint $table) {
             $table->id();
+            $table->string('type')->nullable();
             $table->string('sender');
-            $table->string('recipient');
+            $table->text('recipient');
+            $table->text('cc')->nullable();
+            $table->text('bcc')->nullable();
             $table->string('subject');
-            $table->text('content');
+            $table->longText('content');
+            $table->enum('status', ['processing', 'success', 'failed'])->default('processing');
+            $table->integer('retry_attempts')->default(0);
+            $table->integer('failed_attempts')->default(0);
             $table->timestamps();
         });
     }
