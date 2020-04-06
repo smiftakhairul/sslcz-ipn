@@ -15,7 +15,7 @@ class CreateEmailLogsTable extends Migration
     {
         Schema::create('email_logs', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('email_id');
+            $table->bigInteger('email_id')->unsigned()->index();
             $table->longText('request')->nullable();
             $table->longText('response')->nullable();
             $table->timestamps();

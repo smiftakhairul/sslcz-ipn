@@ -15,11 +15,10 @@ class CreateEmailAttachmentsTable extends Migration
     {
         Schema::create('email_attachments', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('email_id');
+            $table->bigInteger('email_id')->unsigned()->index();
             $table->string('type')->default('primary');
             $table->string('path');
             $table->timestamps();
-
             $table->foreign('email_id')->references('id')->on('emails');
         });
     }

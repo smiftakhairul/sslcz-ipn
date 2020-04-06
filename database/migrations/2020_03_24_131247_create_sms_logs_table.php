@@ -15,7 +15,7 @@ class CreateSmsLogsTable extends Migration
     {
         Schema::create('sms_logs', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('sms_id');
+            $table->bigInteger('sms_id')->unsigned()->index();;
             $table->longText('request')->nullable();
             $table->longText('response')->nullable();
             $table->timestamps();
