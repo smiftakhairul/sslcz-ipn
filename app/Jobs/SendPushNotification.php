@@ -66,7 +66,7 @@ class SendPushNotification implements ShouldQueue
             $result = callToApi($url, json_encode($fields), $headers, 'POST');
             writeToLog('Firebase Push notification response; ' . $result, 'info');
             $response = json_decode($result, true);
-            
+
             if(isset($response['success']) && $response['success'] == 1) {
                 PushNotification::firstWhere('id', $this->notificationId)->update(['status' => 'success']);
 
@@ -77,7 +77,7 @@ class SendPushNotification implements ShouldQueue
 
             PushNotificationLog::firstWhere('notification_id', $this->notificationId)->update(['response' => json_encode($result)]);
         } catch (\Exception $exception) {
-            writeToLog('Firebase Push notification response; ' . $exception->getMessage(), 'info');
+            writeToLog('Firebase Push notification response; ' . $exception->getMessage(), 'error');
             $message = ($exception->getMessage()) ? $exception->getMessage() :'job running error';
             PushNotificationLog::firstWhere('notification_id', $this->notificationId)->update(['response' => $message]);
             PushNotification::firstWhere('id', $this->notificationId)->update(['response' => json_encode($result)]);

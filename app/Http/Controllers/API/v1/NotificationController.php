@@ -19,15 +19,15 @@ class NotificationController extends Controller
                 $this->processSmsData($smsData);
             }
 
-            $pushNotification = $request->input('push_notification_data');
+            $pushNotificationData = $request->input('push_notification_data');
 
-            if($pushNotification) {
-                $this->processPushNotifyData($pushNotification);
+            if($pushNotificationData) {
+                $this->processPushNotifyData($pushNotificationData);
             }
             return response()->json(['status' => 'success', 'message' => 'process done successfully!']);
 
         } catch (\Exception $exception) {
-            dd($exception->getMessage());
+            writeToLog('Notification Notify method  response; ' . $exception->getMessage() .' <br>'. $exception->getTraceAsString(), 'error');
         }
 
     }
