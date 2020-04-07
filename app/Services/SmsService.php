@@ -22,12 +22,12 @@ class SmsService
 
                 /* TODO: Need to remove temporary code when test done. */
                 /* Start of Temp code */
-                return array(
+               /* return array(
                     'status' => true,
                     'respond_status' => "SUCCESSFULL",
                     'respond_message' => "SUCCESSFULL",
                     'respond_reference' => "SUCCESSFULL",
-                );
+                );*/
                 /* End of temp code */
 
                 $param = "user=$user&pass=$pass&sms[0][0]=" . urlencode($sms_to) . "&sms[0][1]=" . urlencode($sms_msg) . "&sid=$sid";
