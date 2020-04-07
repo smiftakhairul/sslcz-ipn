@@ -15,6 +15,7 @@ class CreateSmsTable extends Migration
     {
         Schema::create('sms', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('sms_log_id')->unsigned()->index();
             $table->string('sender')->nullable();
             $table->string('recipient');
             $table->text('content');
@@ -22,6 +23,8 @@ class CreateSmsTable extends Migration
             $table->integer('retry_attempts')->default(0);
             $table->integer('failed_attempts')->default(0);
             $table->timestamps();
+
+            $table->foreign('sms_log_id')->references('id')->on('sms_logs');
         });
     }
 

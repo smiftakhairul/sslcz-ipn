@@ -15,6 +15,7 @@ class CreatePushNotificationsTable extends Migration
     {
         Schema::create('push_notifications', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('notify_log_id')->unsigned()->index();
             $table->string('sender')->nullable();
             $table->string('title')->nullable();
             $table->string('recipient');
@@ -23,6 +24,8 @@ class CreatePushNotificationsTable extends Migration
             $table->integer('retry_attempts')->default(0);
             $table->integer('failed_attempts')->default(0);
             $table->timestamps();
+
+            $table->foreign('notify_log_id')->references('id')->on('push_notification_logs');
         });
     }
 

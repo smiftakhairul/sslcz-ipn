@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateEmailLogsTable extends Migration
+class CreatePushNotificationLogsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,12 @@ class CreateEmailLogsTable extends Migration
      */
     public function up()
     {
-        Schema::create('email_logs', function (Blueprint $table) {
+        Schema::create('push_notification_logs', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('email_id')->unsigned()->index();
             $table->longText('request')->nullable();
             $table->longText('response')->nullable();
             $table->timestamps();
 
-            $table->foreign('email_id')->references('id')->on('emails');
         });
     }
 
@@ -31,10 +29,6 @@ class CreateEmailLogsTable extends Migration
      */
     public function down()
     {
-        Schema::table('email_logs', function (Blueprint $table) {
-            $table->dropForeign(['email_id']);
-        });
-
-        Schema::dropIfExists('email_logs');
+        Schema::dropIfExists('push_notification_logs');
     }
 }

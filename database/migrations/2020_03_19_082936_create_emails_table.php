@@ -15,6 +15,9 @@ class CreateEmailsTable extends Migration
     {
         Schema::create('emails', function (Blueprint $table) {
             $table->id();
+
+            $table->bigInteger('email_log_id')->unsigned()->index();
+
             $table->string('type')->nullable();
             $table->string('sender');
             $table->text('recipient');
@@ -26,6 +29,8 @@ class CreateEmailsTable extends Migration
             $table->integer('retry_attempts')->default(0);
             $table->integer('failed_attempts')->default(0);
             $table->timestamps();
+
+            $table->foreign('email_log_id')->references('id')->on('email_logs');
         });
     }
 

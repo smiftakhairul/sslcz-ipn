@@ -42,15 +42,15 @@ class SendIpnSms implements ShouldQueue
             $smsService = new SmsService();
             $result = $smsService->send_sms($this->data['recipient'], $this->data['content']);
             if (isset($result['status']) && $result['status']) {
-                Sms::find($this->data['sms_id'])->update(['status' => 'success']);
+                Sms::firstWhere('sms_log_id',$this->data['sms_log_id'])->update(['status' => 'success']);
             } else {
-                Sms::find($this->data['sms_id'])->update(['status' => 'failed']);
+                Sms::firstWhere('sms_log_id',$this->data['sms_log_id'])->update(['status' => 'failed']);
             }
-            SmsLog::firstWhere('sms_id', $this->data['sms_id'])->update(['response' => json_encode($result)]);
+            SmsLog::firstWhere('id', $this->data['sms_log_id'])->update(['response' => json_encode($result)]);
         } catch (\Exception $e) {
             $message = ($e->getMessage()) ? $e->getMessage() :'job running error';
-            SmsLog::firstWhere('sms_id', $this->data['sms_id'])->update(['response' => $message]);
-            Sms::find($this->data['sms_id'])->update(['status' => 'failed']);
+            SmsLog::firstWhere('id', $this->data['sms_log_id'])->update(['response' => $message]);
+            Sms::firstWhere('sms_log_id',$this->data['sms_id'])->update(['status' => 'failed']);
         }
     }
 }

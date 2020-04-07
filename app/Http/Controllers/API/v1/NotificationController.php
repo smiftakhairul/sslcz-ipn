@@ -27,7 +27,7 @@ class NotificationController extends Controller
             return response()->json(['status' => 'success', 'message' => 'process done successfully!']);
 
         } catch (\Exception $exception) {
-            writeToLog('Notification Notify method  response; ' . $exception->getMessage() .' <br>'. $exception->getTraceAsString(), 'error');
+            writeToLog('Notification Notify method  response: ' . $exception->getTraceAsString() , 'error');
         }
 
     }

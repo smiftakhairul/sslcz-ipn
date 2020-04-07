@@ -68,19 +68,19 @@ class SendPushNotification implements ShouldQueue
             $response = json_decode($result, true);
 
             if(isset($response['success']) && $response['success'] == 1) {
-                PushNotification::firstWhere('id', $this->notificationId)->update(['status' => 'success']);
+                PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['status' => 'success']);
 
             } else {
-                PushNotification::firstWhere('id', $this->notificationId)->update(['status' => 'failed']);
+                PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['status' => 'failed']);
             }
 
 
-            PushNotificationLog::firstWhere('notification_id', $this->notificationId)->update(['response' => json_encode($result)]);
+            PushNotificationLog::firstWhere('id', $this->notificationId)->update(['response' => json_encode($result)]);
         } catch (\Exception $exception) {
             writeToLog('Firebase Push notification response; ' . $exception->getMessage(), 'error');
             $message = ($exception->getMessage()) ? $exception->getMessage() :'job running error';
-            PushNotificationLog::firstWhere('notification_id', $this->notificationId)->update(['response' => $message]);
-            PushNotification::firstWhere('id', $this->notificationId)->update(['response' => json_encode($result)]);
+            PushNotificationLog::firstWhere('id', $this->notificationId)->update(['response' => $message]);
+            PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['response' => json_encode($result)]);
         }
 
     }
