@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSmsTable extends Migration
+class CreatePushNotificationsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,10 @@ class CreateSmsTable extends Migration
      */
     public function up()
     {
-        Schema::create('sms', function (Blueprint $table) {
+        Schema::create('push_notifications', function (Blueprint $table) {
             $table->id();
             $table->string('sender')->nullable();
+            $table->string('title')->nullable();
             $table->string('recipient');
             $table->text('content');
             $table->enum('status', ['processing', 'success', 'failed'])->default('processing');
@@ -32,6 +33,6 @@ class CreateSmsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sms');
+        Schema::dropIfExists('push_notifications');
     }
 }

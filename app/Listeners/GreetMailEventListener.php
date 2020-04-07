@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Email;
+use App\Models\Email;
 use App\Events\GreetMailEvent;
 use App\Jobs\SendGreetMail;
 use http\Env\Response;

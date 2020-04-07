@@ -20,7 +20,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 //Route::middleware('api')->post('/email/send', 'API\EmailController@send')->name('api.email.send');
 
-Route::prefix('v1')->middleware('api')->group(function () {
+Route::prefix('v1')->group(function () {
     Route::post('/email/send', 'API\v1\EmailController@send')->name('api.v1.email.send');
     Route::post('/sms/send', 'API\v1\SmsController@send')->name('api.v1.email.send');
+
+    /*fcm token and api send*/
+    Route::post('/single/notify', 'API\v1\NotificationController@notify');
 });

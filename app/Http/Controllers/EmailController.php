@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\EmailAttachment;
-use App\EmailLog;
+use App\Models\EmailAttachment;
+use App\Models\EmailLog;
 use App\Events\GreetMailEvent;
 use App\Mail\Greet;
 use Illuminate\Http\Request;
-use App\User;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
-use App\Email;
+use App\Models\Email;
 use Illuminate\Support\Facades\Storage;
 
 class EmailController extends Controller

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API\v1;
 
 use App\Events\GreetSmsEvent;
 use App\Http\Controllers\Controller;
-use App\Sms;
-use App\SmsLog;
+use App\Models\Sms;
+use App\Models\SmsLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -17,7 +17,7 @@ class SmsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'recipient' => 'required',
-            'content' => 'required|min:5',
+            'content_data' => 'required|min:5',
         ]);
 
         if ($validator->fails()) {
@@ -29,7 +29,7 @@ class SmsController extends Controller
                 '_token' => $request->_token,
                 'sender' => $this->sender,
                 'recipient' => $recipient,
-                'content' => $request->content,
+                'content' => $request->content_data,
             ];
             $saved_sms = Sms::create($sms);
 

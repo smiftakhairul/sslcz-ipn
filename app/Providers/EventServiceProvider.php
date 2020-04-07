@@ -27,7 +27,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         GreetSmsEvent::class => [
             GreetSmsEventListener::class,
-        ],
+        ]
     ];
 
     /**

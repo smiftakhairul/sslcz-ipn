@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Sms;
-use App\SmsLog;
+use App\Models\Sms;
+use App\Models\SmsLog;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

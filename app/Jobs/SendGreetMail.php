@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\EmailLog;
+use App\Models\EmailLog;
 use App\Mail\Greet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Util\Exception;
-use App\Email;
+use App\Models\Email;
 
 class SendGreetMail implements ShouldQueue
 {

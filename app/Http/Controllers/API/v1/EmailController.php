@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\API\v1;
 
-use App\Email;
-use App\EmailAttachment;
-use App\EmailLog;
+use App\Models\Email;
+use App\Models\EmailAttachment;
+use App\Models\EmailLog;
 use App\Events\GreetMailEvent;
 use App\Http\Controllers\Controller;
 use App\Mail\Greet;

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\EmailLog;
+use App\Models\EmailLog;
 use App\Events\GreetSmsEvent;
 use App\Notifications\SendGreetSMS;
-use App\Sms;
-use App\SmsLog;
+use App\Models\Sms;
+use App\Models\SmsLog;
 use Bitfumes\KarixNotificationChannel\KarixChannel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -35,7 +35,7 @@ class SmsController extends Controller
     {
         $request->validate([
             'recipient' => 'required',
-            'content' => 'required|min:5',
+            'content_data' => 'required|min:5',
         ]);
 
         foreach ($request->recipient as $recipient) {
@@ -43,7 +43,7 @@ class SmsController extends Controller
                 '_token' => $request->_token,
                 'sender' => $this->sender,
                 'recipient' => $recipient,
-                'content' => $request->content,
+                'content' => $request->content_data,
             ];
             $saved_sms = Sms::create($sms);
 
