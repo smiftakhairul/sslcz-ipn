@@ -84,7 +84,7 @@ if (!function_exists('writeToLog')) {
 }
 
 if (!function_exists('getTextBetweenTags')) {
-# XML PURSH FUNCTION
+# XML PARSE  FUNCTION
     function getTextBetweenTags($string, $tagname)
     {
         $pattern = "/<$tagname ?.*>(.*)<\/$tagname>/";
