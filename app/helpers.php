@@ -82,3 +82,13 @@ if (!function_exists('writeToLog')) {
         }
     }
 }
+
+if (!function_exists('getTextBetweenTags')) {
+# XML PURSH FUNCTION
+    function getTextBetweenTags($string, $tagname)
+    {
+        $pattern = "/<$tagname ?.*>(.*)<\/$tagname>/";
+        preg_match($pattern, $string, $matches);
+        return isset($matches[1]) ? $matches[1] : "";
+    }
+}
