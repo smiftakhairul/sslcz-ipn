@@ -15,7 +15,6 @@ class CreateEmailLogsTable extends Migration
     {
         Schema::create('email_logs', function (Blueprint $table) {
             $table->id();
-
             $table->longText('request')->nullable();
             $table->longText('response')->nullable();
             $table->timestamps();
@@ -30,8 +29,6 @@ class CreateEmailLogsTable extends Migration
      */
     public function down()
     {
-
-
         Schema::dropIfExists('email_logs');
     }
 }
