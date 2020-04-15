@@ -25,5 +25,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/sms/send', 'API\v1\SmsController@send')->name('api.v1.email.send');
 
     /*fcm token and api send*/
-    Route::post('/single/notify', 'API\v1\NotificationController@notify');
+    Route::post('/single/notify', 'API\v1\NotificationController@notify')
+            ->name('api.v1.single_sms.notify');
+    Route::post('/multiple/notify', 'API\v1\NotificationController@multiple_notify')
+            ->name('api.v1.multiple_sms.notify');
 });

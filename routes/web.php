@@ -27,3 +27,6 @@ Route::get('/sms', 'SmsController@show')->name('sms.show');
 
 Route::post('/email/send', 'EmailController@send')->name('email.send');
 Route::post('/sms/send', 'SMSController@send')->name('sms.send');
+
+
+//Route::get('/test', 'HomeController@test');
