@@ -25,11 +25,11 @@ trait ProcessNotifyApiTrait
                 if(! isset($smsData['recipient']) || $smsData['recipient'] == '') {
                     throw new \Exception('Not found the recipient data');
                 }
-                if(! isset($smsData['body']) || $smsData['body'] == '') {
+                if(! isset($smsData['content']) || $smsData['content'] == '') {
                     throw new \Exception('Not found the  body data');
                 }
                 $smsInput['recipient'] = $smsData['recipient'] ?? '';
-                $smsInput['content'] = $smsData['body'] ?? '';
+                $smsInput['content'] = $smsData['content'] ?? '';
                 $smsInput['sms_log_id'] = $smsLogId;
                 $saved_sms = Sms::create($smsInput);
             }

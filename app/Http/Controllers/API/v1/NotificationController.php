@@ -13,10 +13,24 @@ class NotificationController extends Controller
     use ProcessNotifyApiTrait;
 
     public function notify(Request $request) {
+        $validator = Validator::make($request->all(), [
+            'sms_data' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'validation' => $validator->errors()]);
+        }
+
+        $smsData = $request->input('sms_data');
+
+        if (!checkNumberIsValid($smsData['recipient'])) {
+            return response()->json([
+                'status' => 'error',
+                'validation' => ['sms_data' => 'Invalid recipient number format.']
+            ]);
+        }
+
         try {
-
-            $smsData = $request->input('sms_data');
-
             if($smsData) {
                 $this->processSmsData($smsData);
             }

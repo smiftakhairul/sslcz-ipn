@@ -40,7 +40,7 @@ class SendIpnSms implements ShouldQueue
     {
         try {
             $smsService = new SmsService();
-            $result = $smsService->send_sms($this->data['recipient'], $this->data['content']);
+            $result = $smsService->send_sms($this->data);
             if (isset($result['status']) && $result['status']) {
                 Sms::firstWhere('sms_log_id',$this->data['sms_log_id'])->update(['status' => 'success']);
             } else {
