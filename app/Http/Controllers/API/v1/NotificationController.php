@@ -79,4 +79,48 @@ class NotificationController extends Controller
             writeToLog('Notification Notify method  response: ' . $exception->getTraceAsString() , 'error');
         }
     }
+
+    public function stackholderNotify(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sid' => 'required',
+            'user' => 'required',
+            'pass' => 'required',
+            'sms_data' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'validation' => $validator->errors()]);
+        }
+
+        $smsData = $request->input('sms_data');
+        $stackholderData = [
+            'sid' => $request->input('sid'),
+            'user' => $request->input('user'),
+            'pass' => $request->input('pass'),
+        ];
+
+        if (!checkNumberIsValid($smsData['recipient'])) {
+            return response()->json([
+                'status' => 'error',
+                'validation' => ['sms_data' => 'Invalid recipient number format.']
+            ]);
+        }
+
+        try {
+            if($smsData) {
+                $this->processStackholderSmsData($stackholderData, $smsData);
+            }
+
+            $pushNotificationData = $request->input('push_notification_data');
+
+            if($pushNotificationData) {
+                $this->processPushNotifyData($pushNotificationData);
+            }
+            return response()->json(['status' => 'success', 'message' => 'process done successfully!']);
+
+        } catch (\Exception $exception) {
+            writeToLog('Notification Notify method  response: ' . $exception->getTraceAsString() , 'error');
+        }
+    }
 }

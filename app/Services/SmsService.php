@@ -22,8 +22,8 @@ class SmsService
             $pass = config('misc.sms.password');
             $sid = config('misc.sms.sid');
 
-            $sms_data['recipient'] = $data['recipient'];
-            $sms_data['content'] = $data['content'];
+            $sms_data = [];
+            array_push($sms_data, [$data['recipient'], $data['content']]);
 
             $response = Http::asForm()->post($url, [
                 'user' => $user,
@@ -34,9 +34,9 @@ class SmsService
 
             if ($response->status() == '200' && $response->ok() && $response->successful()) {
                 $status = true;
-                $respond_status = getTextBetweenTags($returns, 'LOGIN');
-                $respond_message = getTextBetweenTags($returns, 'STAKEHOLDERID');
-                $respond_reference = getTextBetweenTags($returns, 'REFERENCEID');
+                $respond_status = getTextBetweenTags($response, 'LOGIN');
+                $respond_message = getTextBetweenTags($response, 'STAKEHOLDERID');
+                $respond_reference = getTextBetweenTags($response, 'REFERENCEID');
             }
 
             return array(
@@ -100,6 +100,52 @@ class SmsService
                 'status' => false,
                 'respond_message' => $message
             ];
+        }
+    }
+
+    public function send_stackholder_sms($data, $no_of_attempt = 0)
+    {
+        $status = false;
+        $respond_status = null;
+        $respond_message = null;
+        $respond_reference = null;
+        $returns = null;
+
+        try {
+            $url = config('misc.sms.url');
+            $user = $data['user'];
+            $pass = $data['pass'];
+            $sid = $data['sid'];
+
+            $sms_data = [];
+            array_push($sms_data, [$data['recipient'], $data['content']]);
+
+            $response = Http::asForm()->post($url, [
+                'user' => $user,
+                'pass' => $pass,
+                'sid' => $sid,
+                'sms' => $sms_data
+            ]);
+
+            if ($response->status() == '200' && $response->ok() && $response->successful()) {
+                $status = true;
+                $respond_status = getTextBetweenTags($response, 'LOGIN');
+                $respond_message = getTextBetweenTags($response, 'STAKEHOLDERID');
+                $respond_reference = getTextBetweenTags($response, 'REFERENCEID');
+            }
+
+            return array(
+                'status' => $status,
+                'respond_status' => $respond_status,
+                'respond_message' => $respond_message,
+                'respond_reference' => $respond_reference,
+            );
+        } catch (\Exception $exception) {
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Something went wrong';
+            return array(
+                'status' => false,
+                'respond_message' => $message
+            );
         }
     }
 }

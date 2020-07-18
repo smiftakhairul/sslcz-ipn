@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Jobs\SendIpnMultipleSms;
 use App\Jobs\SendIpnSms;
+use App\Jobs\SendIpnStackholderSms;
 use App\Jobs\SendPushNotification;
 use App\Models\PushNotification;
 use App\Models\PushNotificationLog;
@@ -126,6 +127,43 @@ trait ProcessNotifyApiTrait
                 PushNotificationLog::firstWhere('id', $notificationLog->id)->update(['response' => $message]);
             }
 
+        }
+
+    }
+
+    protected function processStackholderSmsData($stackholderData, $smsData) {
+        try {
+            $smsLog = SmsLog::create([
+                'request' => json_encode($smsData)
+            ]);
+
+            if($smsLog) {
+                $smsLogId = $smsLog->id;
+                if(! isset($smsData['recipient']) || $smsData['recipient'] == '') {
+                    throw new \Exception('Not found the recipient data');
+                }
+                if(! isset($smsData['content']) || $smsData['content'] == '') {
+                    throw new \Exception('Not found the  body data');
+                }
+                $smsInput['recipient'] = $smsData['recipient'] ?? '';
+                $smsInput['content'] = $smsData['content'] ?? '';
+                $smsInput['sms_log_id'] = $smsLogId;
+                $saved_sms = Sms::create($smsInput);
+
+                $smsInput['sid'] = $stackholderData['sid'];
+                $smsInput['user'] = $stackholderData['user'];
+                $smsInput['pass'] = $stackholderData['pass'];
+            }
+            if($saved_sms) {
+                dispatch(new SendIpnStackholderSms($smsInput))->delay(now()->addSeconds(config('misc.notification.delay_in_second')));
+            }
+
+        } catch (\Exception $exception) {
+            writeToLog('processStackholderSmsData method  response ;' . $exception->getMessage() , 'error');
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Process Sms Data Error';
+            if(isset($smsLogId) && $smsLogId) {
+                SmsLog::firstWhere('id', $smsLogId)->update(['response' => $message]);
+            }
         }
 
     }
