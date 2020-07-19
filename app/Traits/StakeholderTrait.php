@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use App\Stakeholder;
+use App\Models\Stakeholder;
 
 trait StakeholderTrait
 {

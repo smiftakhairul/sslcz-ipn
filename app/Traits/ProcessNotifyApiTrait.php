@@ -11,7 +11,7 @@ use App\Models\PushNotification;
 use App\Models\PushNotificationLog;
 use App\Models\Sms;
 use App\Models\SmsLog;
-use App\Stakeholder;
+use App\Models\Stakeholder;
 use Illuminate\Support\Facades\Log;
 use mysql_xdevapi\Exception;
 

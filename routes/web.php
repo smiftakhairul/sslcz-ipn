@@ -19,14 +19,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
+Route::middleware('auth')->group(function () {
+    Route::get('/home', 'HomeController@index')->name('home');
+});
 
-Route::get('/home', 'HomeController@index')->name('home');
-
-Route::get('/email', 'EmailController@show')->name('email.show');
-Route::get('/sms', 'SmsController@show')->name('sms.show');
-
-Route::post('/email/send', 'EmailController@send')->name('email.send');
-Route::post('/sms/send', 'SMSController@send')->name('sms.send');
-
-
-//Route::get('/test', 'HomeController@test');
