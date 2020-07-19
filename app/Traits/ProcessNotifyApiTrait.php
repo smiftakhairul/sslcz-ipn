@@ -49,7 +49,7 @@ trait ProcessNotifyApiTrait
                 $smsInput['stakeholder_url'] = $stakeholder->url;
                 $smsInput['stakeholder_uid'] = $stakeholder->stakeholder_uid;
                 $smsInput['stakeholder_user'] = $stakeholder->user;
-                $smsInput['stakeholder_pass'] = $stakeholder->pass;
+                $smsInput['stakeholder_pass'] = decryptString($stakeholder->pass);
             }
             if($saved_sms) {
                 dispatch(new SendIpnSms($smsInput))->delay(now()->addSeconds(config('misc.notification.delay_in_second')));
@@ -112,7 +112,7 @@ trait ProcessNotifyApiTrait
                 $sms_inputs['stakeholder_url'] = $stakeholder->url;
                 $sms_inputs['stakeholder_uid'] = $stakeholder->stakeholder_uid;
                 $sms_inputs['stakeholder_user'] = $stakeholder->user;
-                $sms_inputs['stakeholder_pass'] = $stakeholder->pass;
+                $sms_inputs['stakeholder_pass'] = decryptString($stakeholder->pass);
                 $sms_inputs['sms_collections'] = $sms_collections;
             }
 

@@ -92,3 +92,27 @@ if (!function_exists('getTextBetweenTags')) {
         return isset($matches[1]) ? $matches[1] : "";
     }
 }
+
+if (!function_exists('encryptString')) {
+    function encryptString($string)
+    {
+        return trim(bin2hex(base64_encode(config('misc.security.enc_salt') . $string . config('misc.security.enc_salt'))));
+    }
+}
+
+if (!function_exists('decryptString')) {
+    /**
+     * @param $string
+     * @return mixed
+     * @throws Exception
+     */
+    function decryptString($string)
+    {
+        try {
+            return str_replace(config('misc.security.enc_salt'), '', trim((base64_decode(hex2bin($string)))));
+        } catch (\Exception $exception) {
+            throw new \Exception('Invalid Store UID');
+        }
+
+    }
+}

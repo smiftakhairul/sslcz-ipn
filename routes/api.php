@@ -35,4 +35,14 @@ Route::prefix('v1')->group(function () {
         ->name('api.v1.single_sms.stakeholder_notify');
     Route::post('/multiple/stakeholder-notify', 'API\v1\NotificationController@multipleStakeholderNotify')
         ->name('api.v1.multiple_sms.stakeholder_notify');
+
+//    stakeholders
+//    Route::apiResource('stakeholders', 'API\v1\StakeholderController'); IDK why not working
+    Route::prefix('stakeholders')->group(function () {
+        Route::get('/', 'API\v1\StakeholderController@index');
+        Route::get('specific/{id}', 'API\v1\StakeholderController@specific');
+        Route::post('store', 'API\v1\StakeholderController@store');
+        Route::post('update/{id}', 'API\v1\StakeholderController@update');
+        Route::post('destroy/{id}', 'API\v1\StakeholderController@destroy');
+    });
 });

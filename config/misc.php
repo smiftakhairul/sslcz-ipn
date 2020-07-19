@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     'firebase' => [
         'authorization_key' => env('FIREBASE_AUTH_KEY', ''),
         'url' => env('FIREBASE_URL', ''),
@@ -20,6 +19,8 @@ return [
         'multiple' => [
             'delay_in_second' => env('NOTIFICATION_DELAY_SECOND',0),
         ]
+    ],
+    'security' => [
+        'enc_salt' => env('ENC_SECURITY_SALT', 'u1rAi'),
     ]
-
 ];
