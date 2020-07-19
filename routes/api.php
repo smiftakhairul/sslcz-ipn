@@ -30,7 +30,9 @@ Route::prefix('v1')->group(function () {
     Route::post('/multiple/notify', 'API\v1\NotificationController@multiple_notify')
             ->name('api.v1.multiple_sms.notify');
 
-//    sms send with dynamic stackholderId, user and pass
-    Route::post('/single/stackholder_notify', 'API\v1\NotificationController@stackholderNotify')
-        ->name('api.v1.single_sms.stackholder_notify');
+//    sms send with dynamic stakeholder_id, user and pass
+    Route::post('/single/stakeholder-notify', 'API\v1\NotificationController@stakeholderNotify')
+        ->name('api.v1.single_sms.stakeholder_notify');
+    Route::post('/multiple/stakeholder-notify', 'API\v1\NotificationController@multipleStakeholderNotify')
+        ->name('api.v1.multiple_sms.stakeholder_notify');
 });

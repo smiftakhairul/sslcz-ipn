@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendIpnStackholderSms implements ShouldQueue
+class SendIpnStakeholderSms implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -39,7 +39,7 @@ class SendIpnStackholderSms implements ShouldQueue
     {
         try {
             $smsService = new SmsService();
-            $result = $smsService->send_stackholder_sms($this->data);
+            $result = $smsService->send_stakeholder_sms($this->data);
             if (isset($result['status']) && $result['status']) {
                 Sms::firstWhere('sms_log_id',$this->data['sms_log_id'])->update(['status' => 'success']);
             } else {

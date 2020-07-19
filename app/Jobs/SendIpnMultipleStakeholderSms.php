@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class SendIpnMultipleSms implements ShouldQueue
+class SendIpnMultipleStakeholderSms implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -44,7 +44,7 @@ class SendIpnMultipleSms implements ShouldQueue
 
         try {
             $sms_service = new SmsService();
-            $result = $sms_service->send_multiple_sms($this->data);
+            $result = $sms_service->send_multiple_stakeholder_sms($this->data);
 
             if (isset($result['status']) && $result['status']) {
                 Sms::where('sms_log_id', $sms_log_id)->update(['status' => 'success']);
