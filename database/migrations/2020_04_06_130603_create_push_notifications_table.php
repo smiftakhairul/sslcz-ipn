@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\NotifyType;
 
 class CreatePushNotificationsTable extends Migration
 {
@@ -18,7 +19,8 @@ class CreatePushNotificationsTable extends Migration
             $table->bigInteger('notify_log_id')->unsigned()->index();
             $table->string('sender')->nullable();
             $table->string('title')->nullable();
-            $table->string('recipient');
+            $table->enum('notify_type', [NotifyType::$_SINGLE, NotifyType::$_MULTIPLE])->default(NotifyType::$_SINGLE);
+            $table->longText('recipient');
             $table->text('content');
             $table->enum('status', ['processing', 'success', 'failed'])->default('processing');
             $table->integer('retry_attempts')->default(0);

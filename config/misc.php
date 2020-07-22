@@ -18,6 +18,7 @@ return [
         'delay_in_second' => env('NOTIFICATION_DELAY_SECOND',0),
         'multiple' => [
             'delay_in_second' => env('NOTIFICATION_DELAY_SECOND',0),
+            'limit' => 50
         ]
     ],
     'security' => [

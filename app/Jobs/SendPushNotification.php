@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Models\PushNotification;
 use App\Models\PushNotificationLog;
 use App\Models\SmsLog;
+use App\Services\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Exception;
 
 class SendPushNotification implements ShouldQueue
 {
@@ -21,21 +23,28 @@ class SendPushNotification implements ShouldQueue
     */
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $data;
-    private $fcm_token;
-    private $notificationId;
+    private $stakeholder;
+    private $push_data;
+    private $log_id;
+    private $notify_type;
+    private $firebase_url;
 
     public $tries = 5;
+
     /**
-     * Create a new job instance.
-     *
-     * @return void
+     * SendPushNotification constructor.
+     * @param $stakeholder
+     * @param $push_data
+     * @param $log_id
+     * @param $notify_type
      */
-    public function __construct($data, $recipient, $notifyId=0)
+    public function __construct($stakeholder, $push_data, $log_id, $notify_type)
     {
-        $this->data = $data;
-        $this->fcm_token = $recipient;
-        $this->notificationId = $notifyId;
+        $this->stakeholder = $stakeholder;
+        $this->push_data = $push_data;
+        $this->log_id = $log_id;
+        $this->notify_type = $notify_type;
+        $this->firebase_url = config('misc.firebase.url');
     }
 
     /**
@@ -46,42 +55,25 @@ class SendPushNotification implements ShouldQueue
     public function handle()
     {
         try {
-            $url = config('misc.firebase.url');
-            $fields = array(
-                "priority" => "high",
-                "data" => $this->data,
+            $pnService = new PushNotificationService();
+            $response = $pnService->sendPushNotification(
+                $this->stakeholder,
+                $this->push_data,
+                $this->notify_type,
+                $this->firebase_url
             );
 
-            if (is_array($this->fcm_token)) {
-                $fields["registration_ids"] = $this->fcm_token;
+            if(isset($response['success']) && $response['success']) {
+                PushNotification::firstWhere('notify_log_id', $this->log_id)->update(['status' => 'success']);
             } else {
-                $fields["to"] = $this->fcm_token;
+                PushNotification::firstWhere('notify_log_id', $this->log_id)->update(['status' => 'failed']);
             }
-
-            $headers = array(
-                'Authorization: key=' . config('misc.firebase.authorization_key'),
-                'Content-Type: application/json'
-            );
-
-            $result = callToApi($url, json_encode($fields), $headers, 'POST');
-            writeToLog('Firebase Push notification response; ' . $result, 'info');
-            $response = json_decode($result, true);
-
-            if(isset($response['success']) && $response['success'] == 1) {
-                PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['status' => 'success']);
-
-            } else {
-                PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['status' => 'failed']);
-            }
-
-
-            PushNotificationLog::firstWhere('id', $this->notificationId)->update(['response' => json_encode($result)]);
-        } catch (\Exception $exception) {
-            writeToLog('Firebase Push notification response; ' . $exception->getMessage(), 'error');
-            $message = ($exception->getMessage()) ? $exception->getMessage() :'job running error';
-            PushNotificationLog::firstWhere('id', $this->notificationId)->update(['response' => $message]);
-            PushNotification::firstWhere('notify_log_id', $this->notificationId)->update(['response' => json_encode($result)]);
+            PushNotificationLog::find($this->log_id)->update(['response' => json_encode($response)]);
+        } catch (Exception $exception) {
+            writeToLog('Firebase Push notification response:' . $exception->getMessage(), 'error');
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'job running error';
+            PushNotificationLog::find($this->log_id)->update(['response' => $message]);
+            PushNotification::firstWhere('notify_log_id', $this->log_id)->update(['response' => json_encode($response)]);
         }
-
     }
 }

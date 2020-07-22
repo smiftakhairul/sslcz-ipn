@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\NotifyType;
 use App\Jobs\SendIpnMultipleSms;
 use App\Jobs\SendIpnMultipleStakeholderSms;
 use App\Jobs\SendIpnSms;
@@ -13,6 +14,7 @@ use App\Models\Sms;
 use App\Models\SmsLog;
 use App\Models\Stakeholder;
 use Illuminate\Support\Facades\Log;
+use Mockery\Matcher\Not;
 use mysql_xdevapi\Exception;
 
 trait ProcessNotifyApiTrait
@@ -126,44 +128,6 @@ trait ProcessNotifyApiTrait
         }
     }
 
-    protected function processPushNotifyData($pushData) {
-        try {
-            $notificationLog = PushNotificationLog::create([
-                'request' => json_encode($pushData)
-            ]);
-
-            if($notificationLog) {
-                if(! isset($pushData['recipient']) || $pushData['recipient'] == '') {
-                    throw new \Exception('Not found the recipient data');
-                }
-                if(! isset($pushData['content']) || $pushData['content'] == '') {
-                    throw new \Exception('Not found the body data');
-                }
-                $pushInput['recipient'] = $pushData['recipient'] ?? '';
-                $pushInput['content'] = $pushData['content'] ?? '';
-                $pushInput['title'] = $pushData['title'] ?? '';
-                $pushInput['notify_log_id'] = $notificationLog->id;
-                $saved_notification = PushNotification::create($pushInput);
-
-                if ($saved_notification) {
-                    dispatch(new SendPushNotification(['title' => $pushInput['title'], 'content' => $pushInput['content']],
-                        $pushInput['recipient'], $notificationLog->id))->delay(now()->addSeconds(config('misc.notification.delay_in_second')));;
-                }
-            }
-
-        }catch (\Exception $exception) {
-
-            writeToLog('processPushNotifyData method  response ;' . $exception->getMessage() , 'error');
-            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Process Sms Data Error';
-
-            if(isset($notificationLog) && $notificationLog->id) {
-                PushNotificationLog::firstWhere('id', $notificationLog->id)->update(['response' => $message]);
-            }
-
-        }
-
-    }
-
     protected function processStakeholderSmsData(array $data) {
         try {
             $stakeholderData = [
@@ -264,6 +228,128 @@ trait ProcessNotifyApiTrait
             }
         } catch (\Exception $exception) {
             throw new \Exception('Something went wrong. Please try again.');
+        }
+    }
+
+
+    protected function processPushNotifyDataTmp($data) {
+        try {
+            $stakeholder_uid = $data['stakeholder_uid'];
+            $pushData = $data['sms_data'];
+
+            $stakeholder = $this->checkStakeholder($stakeholder_uid);
+            if (!$stakeholder) {
+                throw new \Exception('Invalid stakeholder! No stakeholder found.');
+            }
+            if ($stakeholder && empty($stakeholder->fcm_authorize_key)) {
+                throw new \Exception('Stakeholder does not have fcm authorization.');
+            }
+
+            $notificationLog = PushNotificationLog::create([
+                'request' => json_encode($pushData)
+            ]);
+
+            if($notificationLog) {
+                if(! isset($pushData['recipient']) || $pushData['recipient'] == '') {
+                    throw new \Exception('Not found the recipient data');
+                }
+                if(! isset($pushData['content']) || $pushData['content'] == '') {
+                    throw new \Exception('Not found the body data');
+                }
+                $pushInput['recipient'] = $pushData['recipient'] ?? '';
+                $pushInput['content'] = $pushData['content'] ?? '';
+                $pushInput['title'] = $pushData['title'] ?? '';
+                $pushInput['notify_log_id'] = $notificationLog->id;
+                $saved_notification = PushNotification::create($pushInput);
+                $pushInput['stakeholder_fcm_authorize_key'] = $stakeholder->stakeholder_uid;
+
+                if ($saved_notification) {
+                    dispatch(new SendPushNotification(
+                        $pushInput['stakeholder'],
+                        ['title' => $pushInput['title'], 'content' => $pushInput['content']],
+                        $pushInput['recipient'],
+                        $notificationLog->id)
+                    )->delay(now()->addSeconds(config('misc.notification.delay_in_second')));;
+                }
+            }
+
+        }catch (\Exception $exception) {
+
+            writeToLog('processPushNotifyData method  response ;' . $exception->getMessage() , 'error');
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Process Sms Data Error';
+
+            if(isset($notificationLog) && $notificationLog->id) {
+                PushNotificationLog::firstWhere('id', $notificationLog->id)->update(['response' => $message]);
+            }
+
+        }
+
+    }
+
+    protected function processPushNotifyData($data, $notify_type = 'single', $is_stakeholder = true)
+    {
+        try {
+            $stakeholder_uid = $data['stakeholder_uid'];
+            $pushData = $data['push_notification_data'];
+            $fcm_authorize_key = null;
+
+            if ($notify_type != NotifyType::$_SINGLE && $notify_type != NotifyType::$_MULTIPLE) {
+                throw new \Exception('Invalid notification type.');
+            }
+
+            if ($is_stakeholder) {
+                $stakeholder = $this->checkStakeholder($stakeholder_uid);
+                if (!$stakeholder) {
+                    throw new \Exception('Invalid stakeholder! No stakeholder found.');
+                }
+                if ($stakeholder && empty($stakeholder->fcm_authorize_key)) {
+                    throw new \Exception('Stakeholder does not have fcm authorization.');
+                }
+                $fcm_authorize_key = $stakeholder->fcm_authorize_key;
+            } else {
+                $fcm_authorize_key = $data['stakeholder_firebase_auth_key'] ?? null;
+            }
+
+            $stakeHolderData = [
+                'stakeholder_uid' => $stakeholder_uid,
+                'fcm_authorize_key' => $fcm_authorize_key
+            ];
+
+            $notificationLog = PushNotificationLog::create(['request' => json_encode($pushData)]);
+
+            $limit = ($notify_type == NotifyType::$_SINGLE) ? 1 : config('misc.notification.multiple.limit');
+            $totalRecipient = ($notify_type == NotifyType::$_SINGLE) ? $limit : count($pushData['recipient']);
+
+            if($notificationLog) {
+                if ($totalRecipient > $limit) {
+                    throw new \Exception('Maximum limit of push notification recipient exceeded.');
+                }
+
+                $pushInput['notify_type'] = $notify_type;
+                $pushInput['recipient'] = ($notify_type == NotifyType::$_SINGLE)
+                    ? $pushData['recipient'] : json_encode($pushData['recipient']);
+                $pushInput['content'] = $pushData['content'];
+                $pushInput['title'] = $pushData['title'] ?? '';
+                $pushInput['notify_log_id'] = $notificationLog->id;
+                $saved_notification = PushNotification::create($pushInput);
+                $pushInput['recipient'] = $pushData['recipient'];
+
+                if ($saved_notification) {
+                    dispatch(
+                        new SendPushNotification($stakeHolderData, $pushInput, $notificationLog->id, $notify_type)
+                    )->delay(now()->addSeconds(config('misc.notification.delay_in_second')));
+                }
+            } else {
+                throw new \Exception('Notification log could not be stored.');
+            }
+        }
+        catch (\Exception $exception) {
+            writeToLog('processPushNotifyData method response: ' . $exception->getMessage() , 'error');
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Process push notify data error.';
+
+            if(isset($notificationLog) && $notificationLog->id) {
+                PushNotificationLog::find($notificationLog->id)->update(['response' => $message]);
+            }
         }
     }
 }
