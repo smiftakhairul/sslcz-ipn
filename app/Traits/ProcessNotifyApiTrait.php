@@ -16,6 +16,7 @@ use App\Models\PushNotificationLog;
 use App\Models\Sms;
 use App\Models\SmsLog;
 use App\Models\Stakeholder;
+use Illuminate\Http\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Mockery\Matcher\Not;
@@ -51,11 +52,22 @@ trait ProcessNotifyApiTrait
                     $emailInput['recipient'] = json_decode($emailInput['recipient'], true);
                     $emailInput['cc'] = json_decode($emailInput['cc'], true);
                     $emailInput['bcc'] = json_decode($emailInput['bcc'], true);
-                    $emailInput['attachments'] = $this->uploadEmailAttachments($emailData['attachments']);
 
+                    $email_attachments = [];
+                    $emailInput['attachments'] = $this->uploadEmailAttachments($emailData['attachments']);
+                    $emailInput['attachment_url'] = $this->uploadEmailAttachmentUrl($emailData['attachment_url']);
                     if (!empty($emailInput['attachments'])) {
-                        $email->attachments()->sync($emailInput['attachments']);
+                        $email_attachments = array_merge($email_attachments, $emailInput['attachments']);
                     }
+                    if (!empty($emailInput['attachment_url'])) {
+                        $email_attachments = array_merge($email_attachments, $emailInput['attachment_url']);
+                    }
+
+                    if (!empty($email_attachments)) {
+                        $email->attachments()->sync($email_attachments);
+                    }
+
+                    $emailInput['attachments'] = $email_attachments;
 
                     dispatch(new SendIpnEmail($emailInput))
                         ->delay(now()->addSeconds(config('misc.notification.delay_in_second')));
@@ -77,18 +89,59 @@ trait ProcessNotifyApiTrait
         }
 
         $output = [];
-        foreach ($attachments as $file) {
-            $mime = $file->getClientOriginalExtension();
-            $file_name = time(). '.' . $mime;
-            $storagePath = Storage::disk('commonStorage')->getDriver()->getAdapter()->getPathPrefix();
-            $subDirePath = 'uploads/email-attachments/';
-            $directoryPath = $storagePath . $subDirePath;
-            \File::isDirectory($directoryPath) or \File::makeDirectory($directoryPath, 0775, true, true);
-            $path = Storage::disk('commonStorage')->putFileAs($subDirePath, $file, $file_name);
-            $exists = Storage::disk('commonStorage')->exists($path);
-            if($exists) {
-                $output[] = $file_name;
+        try {
+            $count = 0;
+            foreach ($attachments as $file) {
+                $count++;
+                $time = $count . time();
+                $mime = $file->getClientOriginalExtension();
+                $file_name = uniqid($time) . '.' . $mime;
+                $storagePath = Storage::disk('commonStorage')->getDriver()->getAdapter()->getPathPrefix();
+                $subDirePath = 'uploads/email-attachments/';
+                $directoryPath = $storagePath . $subDirePath;
+                \File::isDirectory($directoryPath) or \File::makeDirectory($directoryPath, 0775, true, true);
+                $path = Storage::disk('commonStorage')->putFileAs($subDirePath, $file, $file_name);
+                $exists = Storage::disk('commonStorage')->exists($path);
+                if ($exists) {
+                    $output[] = $file_name;
+                }
             }
+        } catch (\Exception $exception) {
+            writeToLog('processEmailData method - attachments store error: ' . $exception->getMessage() , 'error');
+        }
+
+        return $output;
+    }
+
+    protected function uploadEmailAttachmentUrl($attachments)
+    {
+        if (empty($attachments)) {
+            return [];
+        }
+
+        $output = [];
+        try {
+            $count = 0;
+            foreach ($attachments as $url) {
+                $count++;
+                $time = $count . time();
+                $file = file_get_contents($url);
+                $file_name = substr($url, strrpos($url, '/') + 1);
+                $mime = pathinfo($file_name, PATHINFO_EXTENSION);
+                $file_name = uniqid($time) . '.' . $mime;
+
+                $storagePath = Storage::disk('commonStorage')->getDriver()->getAdapter()->getPathPrefix();
+                $subDirePath = 'uploads/email-attachments/';
+                $directoryPath = $storagePath . $subDirePath;
+                \File::isDirectory($directoryPath) or \File::makeDirectory($directoryPath, 0775, true, true);
+                $path = Storage::disk('commonStorage')->put($subDirePath . $file_name, $file);
+                $exists = Storage::disk('commonStorage')->exists($subDirePath . $file_name);
+                if ($exists) {
+                    $output[] = $file_name;
+                }
+            }
+        } catch (\Exception $exception) {
+            writeToLog('processEmailData method - attachment_url store error: ' . $exception->getMessage() , 'error');
         }
 
         return $output;

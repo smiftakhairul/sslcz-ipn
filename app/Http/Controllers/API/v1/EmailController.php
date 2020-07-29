@@ -32,6 +32,7 @@ class EmailController extends Controller
             'bcc' => 'array',
             'attachments' => 'array',
             'attachments.*' => 'required|file|max:'.config('misc.email.max_email_attachment_size'),
+            'attachment_url' => 'array',
         ]);
 
         if ($validator->fails()) {
@@ -73,6 +74,7 @@ class EmailController extends Controller
         $input['cc'] = $request->input('cc') ?? [];
         $input['bcc'] = $request->input('bcc') ?? [];
         $input['attachments'] = $request->file('attachments') ?? [];
+        $input['attachment_url'] = $request->input('attachment_url') ?? [];
         return $input;
     }
 
