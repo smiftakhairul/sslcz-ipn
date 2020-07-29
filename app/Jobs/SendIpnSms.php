@@ -50,7 +50,7 @@ class SendIpnSms implements ShouldQueue
         } catch (\Exception $e) {
             $message = ($e->getMessage()) ? $e->getMessage() :'job running error';
             SmsLog::firstWhere('id', $this->data['sms_log_id'])->update(['response' => $message]);
-            Sms::firstWhere('sms_log_id',$this->data['sms_id'])->update(['status' => 'failed']);
+            Sms::firstWhere('sms_log_id',$this->data['sms_log_id'])->update(['status' => 'failed']);
         }
     }
 }

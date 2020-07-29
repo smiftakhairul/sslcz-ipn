@@ -2,85 +2,139 @@
 
 namespace App\Http\Controllers\API\v1;
 
+use App\Enums\NotifyType;
 use App\Models\Email;
 use App\Models\EmailAttachment;
 use App\Models\EmailLog;
 use App\Events\GreetMailEvent;
 use App\Http\Controllers\Controller;
 use App\Mail\Greet;
-use http\Env\Response;
+use App\Traits\ProcessNotifyApiTrait;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class EmailController extends Controller
 {
+    use ProcessNotifyApiTrait;
+
     public function send(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'sender' => 'required|max:255',
-            'recipient' => 'required',
-            'subject' => 'required|min:10|max:255',
-            'content' => 'required|min:200',
+            'sender' => 'required|array',
+            'recipient' => 'required|array',
+            'subject' => 'required',
+            'content' => 'required',
+            'cc' => 'array',
+            'bcc' => 'array',
+            'attachments' => 'array',
+            'attachments.*' => 'required|file|max:'.config('misc.email.max_email_attachment_size'),
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => 'error', 'validation' => $validator->errors()]);
         }
 
-        $request_data = $request->all();
-        $request->merge(['recipient' => json_encode($request->recipient)]);
-        if (isset($request->cc) && !empty($request->cc)) {
-            $request->merge(['cc' => json_encode($request->cc)]);
+        $validationResponse = $this->customRequestValidation($request);
+        if (!empty($validationResponse) && isset($validationResponse['status']) && $validationResponse['status'] == 'error') {
+            return response()->json([
+                'status' => $validationResponse['status'],
+                'validation' => $validationResponse['validation']
+            ]);
         }
-        if (isset($request->bcc) && !empty($request->bcc)) {
-            $request->merge(['bcc' => json_encode($request->bcc)]);
+
+        $requestData = $this->manageInput($request);
+
+        try {
+            if ($requestData && !empty($requestData)) {
+                $this->processEmailData($requestData);
+            }
+
+            return response()->json(['status' => 'success', 'message' => 'process done successfully!']);
+        } catch (\Exception $exception) {
+            Log::error('Email Send: ' . $exception->getMessage().'--'.$exception->getFile().'--'.$exception->getLine());
         }
+    }
 
-        $email = Email::create($request->except('attachments'));
-        $email_attachments = [];
+    protected function manageInput(Request $request)
+    {
+        $input = [];
+        $sender = $request->input('sender') ?? [];
+        if (!empty($sender)) {
+            $sender['name'] = (isset($sender['name']) && !empty($sender['name'])) ? $sender['name'] : $sender['email'];
+        }
+        $input['sender'] = $sender;
+        $input['recipient'] = $request->input('recipient') ?? [];
+        $input['subject'] = $request->input('subject') ?? '';
+        $input['content'] = $request->input('content') ?? '';
+        $input['cc'] = $request->input('cc') ?? [];
+        $input['bcc'] = $request->input('bcc') ?? [];
+        $input['attachments'] = $request->file('attachments') ?? [];
+        return $input;
+    }
 
-        if ($email && isset($request->attachments) && !empty($request->attachments)) {
-            foreach ($request->attachments as $attachment) {
-                $filename = $attachment->getClientOriginalName();
-                $mime = $attachment->getClientMimeType();
-
-                if (Storage::disk('public')->exists('attachments/emails/' . $email->id . '/'
-                    . $attachment->getClientOriginalName())) {
-                    $filename = time() . '_' . $attachment->getClientOriginalName();
-                }
-
-                $path = Storage::disk('public')->putFileAs('attachments/emails/' . $email->id, $attachment, $filename);
-                $email_attachment = EmailAttachment::create([
-                    'email_id' => $email->id,
-                    'path' => $path
+    protected function customRequestValidation(Request $request)
+    {
+        if (is_array($request->input('sender')) && !empty($request->input('sender'))) {
+            if (!isset($request->input('sender')['email']) || empty($request->input('sender')['email'])) {
+                return $this->customRequestValidationErrorResponse('sender', [
+                    'Sender email not found.'
                 ]);
-
-                if ($email_attachment) {
-                    array_push($email_attachments, [
-                        'path' => $path,
-                        'filename' => $filename,
-                        'mime' => $mime
+            } else {
+                if (!$this->isEmail($request->input('sender')['email'])) {
+                    return $this->customRequestValidationErrorResponse('sender', [
+                        'Sender must be email.'
                     ]);
                 }
             }
         }
-
-        $request_data['email_attachments'] = $email_attachments;
-        unset($request_data['attachments']);
-
-//        write log
-        if ($email) {
-            $email_log = EmailLog::create([
-                'email_id' => $email->id,
-                'request' => json_encode($request_data)
-            ]);
+        if (is_array($request->input('recipient')) && !empty($request->input('recipient'))) {
+            foreach ($request->input('recipient') as $recipient) {
+                if (!$this->isEmail($recipient)) {
+                    return $this->customRequestValidationErrorResponse('recipient', [
+                        'Recipient must be email.'
+                    ]);
+                }
+            }
         }
+        if ($request->has('cc') && is_array($request->input('cc')) && !empty($request->input('cc'))) {
+            foreach ($request->input('cc') as $cc) {
+                if (!$this->isEmail($cc)) {
+                    return $this->customRequestValidationErrorResponse('cc', [
+                        'CC must be email.'
+                    ]);
+                }
+            }
+        }
+        if ($request->has('bcc') && is_array($request->input('bcc')) && !empty($request->input('bcc'))) {
+            foreach ($request->input('bcc') as $bcc) {
+                if (!$this->isEmail($bcc)) {
+                    return $this->customRequestValidationErrorResponse('bcc', [
+                        'BCC must be email.'
+                    ]);
+                }
+            }
+        }
+    }
 
-        event(new GreetMailEvent(['request_data' => $request_data, 'email' => $email]));
+    protected function customRequestValidationErrorResponse($key, $message)
+    {
+        return [
+            'status' => 'error',
+            'validation' => [
+                $key => $message
+            ]
+        ];
+    }
 
-        return response()->json(['status' => 'success', 'message' => 'Mail sent successfully!']);
+    protected function isEmail($email)
+    {
+        if(filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return true;
+        }
+        return false;
     }
 }

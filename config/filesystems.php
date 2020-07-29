@@ -64,6 +64,13 @@ return [
             'url' => env('AWS_URL'),
         ],
 
+        'commonStorage' => [
+            'driver' => 'local',
+            'root' => env('COMMON_STORAGE_PATH', storage_path('app/common')),
+            'visibility' => 'public',
+            'url' => env('APP_URL').'/storage/common',
+        ],
+
     ],
 
     /*

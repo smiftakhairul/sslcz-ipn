@@ -3,23 +3,96 @@
 namespace App\Traits;
 
 use App\Enums\NotifyType;
+use App\Jobs\SendIpnEmail;
 use App\Jobs\SendIpnMultipleSms;
 use App\Jobs\SendIpnMultipleStakeholderSms;
 use App\Jobs\SendIpnSms;
 use App\Jobs\SendIpnStakeholderSms;
 use App\Jobs\SendPushNotification;
+use App\Models\Email;
+use App\Models\EmailLog;
 use App\Models\PushNotification;
 use App\Models\PushNotificationLog;
 use App\Models\Sms;
 use App\Models\SmsLog;
 use App\Models\Stakeholder;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Mockery\Matcher\Not;
 use mysql_xdevapi\Exception;
 
 trait ProcessNotifyApiTrait
 {
     use StakeholderTrait;
+
+    protected function processEmailData(array $emailData)
+    {
+        try {
+            $emailLog = EmailLog::create([
+                'request' => json_encode($emailData)
+            ]);
+
+            if ($emailLog) {
+                $emailLogId = $emailLog->id;
+                $emailInput = [
+                    'email_log_id' => $emailLogId,
+                    'sender' => json_encode($emailData['sender']),
+                    'recipient' => json_encode($emailData['recipient']),
+                    'cc' => json_encode($emailData['cc']),
+                    'bcc' => json_encode($emailData['bcc']),
+                    'subject' => $emailData['subject'],
+                    'content' => $emailData['content'],
+                ];
+
+                $email = Email::create($emailInput);
+
+                if ($email) {
+                    $emailInput['sender'] = json_decode($emailInput['sender'], true);
+                    $emailInput['recipient'] = json_decode($emailInput['recipient'], true);
+                    $emailInput['cc'] = json_decode($emailInput['cc'], true);
+                    $emailInput['bcc'] = json_decode($emailInput['bcc'], true);
+                    $emailInput['attachments'] = $this->uploadEmailAttachments($emailData['attachments']);
+
+                    if (!empty($emailInput['attachments'])) {
+                        $email->attachments()->sync($emailInput['attachments']);
+                    }
+
+                    dispatch(new SendIpnEmail($emailInput))
+                        ->delay(now()->addSeconds(config('misc.notification.delay_in_second')));
+                }
+            }
+        } catch (\Exception $exception) {
+            writeToLog('processEmailData method  response ;' . $exception->getMessage() , 'error');
+            $message = ($exception->getMessage()) ? $exception->getMessage() : 'Process Email Data Error';
+            if(isset($emailLogId) && $emailLogId) {
+                EmailLog::firstWhere('id', $emailLogId)->update(['response' => $message]);
+            }
+        }
+    }
+
+    protected function uploadEmailAttachments($attachments)
+    {
+        if (empty($attachments)) {
+            return [];
+        }
+
+        $output = [];
+        foreach ($attachments as $file) {
+            $mime = $file->getClientOriginalExtension();
+            $file_name = time(). '.' . $mime;
+            $storagePath = Storage::disk('commonStorage')->getDriver()->getAdapter()->getPathPrefix();
+            $subDirePath = 'uploads/email-attachments/';
+            $directoryPath = $storagePath . $subDirePath;
+            \File::isDirectory($directoryPath) or \File::makeDirectory($directoryPath, 0775, true, true);
+            $path = Storage::disk('commonStorage')->putFileAs($subDirePath, $file, $file_name);
+            $exists = Storage::disk('commonStorage')->exists($path);
+            if($exists) {
+                $output[] = $file_name;
+            }
+        }
+
+        return $output;
+    }
 
     protected function processSmsData(array $data) {
         try {

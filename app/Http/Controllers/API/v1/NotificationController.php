@@ -14,7 +14,8 @@ class NotificationController extends Controller
 {
     use ProcessNotifyApiTrait, NotifyType;
 
-    public function notify(Request $request) {
+    public function notify(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'stakeholder_uid' => 'required',
             'sms_data' => 'array',

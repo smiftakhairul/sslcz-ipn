@@ -14,6 +14,9 @@ return [
             'limit' => 50,
         ]
     ],
+    'email' => [
+        'max_email_attachment_size' => env('MAX_EMAIL_ATTACHMENT_SIZE', 2048)
+    ],
     'notification' => [
         'delay_in_second' => env('NOTIFICATION_DELAY_SECOND',0),
         'multiple' => [
