@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Mail\Greet;
 use App\Mail\IpnEmail;
 use App\Models\Email;
 use App\Models\EmailLog;
